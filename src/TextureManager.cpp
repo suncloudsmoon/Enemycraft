@@ -17,18 +17,16 @@
  * SOFTWARE.
  */
 /*
- * main.cpp
+ * TextureManager.cpp
  *
- *  Created on: Oct 2, 2021
+ *  Created on: Oct 3, 2021
  *      Author: suncloudsmoon
  */
 
-#include <iostream>
+#include <string>
 
-#include "../include/Game.hpp"
+#include "../include/TextureManager.hpp"
 
-int main() {
-	Game g("Enemycraft - Just Imagine", 1920, 1080);
-	g.startGameLoop();
+bool TextureManager::loadBlockTexture(std::string path) {
+	return blockTexture.loadFromFile(path);
 }
-

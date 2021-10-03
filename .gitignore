@@ -1,5 +1,7 @@
 .settings/
 Debug/
+include/SFML/
 libs/
+Gimp/
 .cproject
 .project

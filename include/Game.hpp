@@ -17,18 +17,51 @@
  * SOFTWARE.
  */
 /*
- * main.cpp
+ * Game.hpp
  *
  *  Created on: Oct 2, 2021
  *      Author: suncloudsmoon
  */
 
-#include <iostream>
+#ifndef INCLUDE_GAME_HPP_
+#define INCLUDE_GAME_HPP_
 
-#include "../include/Game.hpp"
+#include <string>
+#include <thread>
+#include <random>
 
-int main() {
-	Game g("Enemycraft - Just Imagine", 1920, 1080);
-	g.startGameLoop();
-}
+#include "../include/SFML/Graphics.hpp"
+#include "../include/BlockManager.hpp"
+#include "../include/TextureManager.hpp"
 
+class Game {
+public:
+	Game(std::string windowTitle, unsigned int width, unsigned int height);
+	~Game();
+
+	void startGameLoop();
+
+	void handleAllUserInteractions(sf::Event &event, sf::RenderWindow &window);
+	void handleMousePresses(sf::Event &event);
+	void handleKeyPresses(sf::Event &event);
+
+	void drawAllBlocks(sf::RenderWindow &window);
+
+	// Calculations
+	void updateBlockPositions();
+
+protected:
+private:
+	TextureManager textureManager;
+
+	std::mt19937 randDevice;
+	BlockManager<float, int> *blockManager;
+
+	sf::Time deltaTime;
+	std::string title;
+	unsigned int w, h;
+};
+
+
+
+#endif /* INCLUDE_GAME_HPP_ */

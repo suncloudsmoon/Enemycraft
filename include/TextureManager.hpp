@@ -17,18 +17,32 @@
  * SOFTWARE.
  */
 /*
- * main.cpp
+ * TextureManager.hpp
  *
- *  Created on: Oct 2, 2021
+ *  Created on: Oct 3, 2021
  *      Author: suncloudsmoon
  */
 
-#include <iostream>
+#ifndef INCLUDE_TEXTUREMANAGER_HPP_
+#define INCLUDE_TEXTUREMANAGER_HPP_
 
-#include "../include/Game.hpp"
+#include <string>
+#include <SFML/Graphics.hpp>
 
-int main() {
-	Game g("Enemycraft - Just Imagine", 1920, 1080);
-	g.startGameLoop();
-}
+class TextureManager {
+public:
+	bool loadBlockTexture(std::string path);
 
+	sf::Texture& getBlockTexture() {
+		return blockTexture;
+	}
+
+	void setBlockTexture(sf::Texture &blockTexture) {
+		this->blockTexture = blockTexture;
+	}
+
+private:
+	sf::Texture blockTexture;
+};
+
+#endif /* INCLUDE_TEXTUREMANAGER_HPP_ */
