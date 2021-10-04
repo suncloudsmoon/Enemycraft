@@ -32,13 +32,15 @@
 
 #include <SFML/Graphics.hpp>
 #include "Block.hpp"
+#include "TextureManager.hpp"
 
 template<class P, class T>
 class BlockManager {
 public:
-	BlockManager(P bSize, P bMass, T w, T h, sf::Texture &bTexture, std::mt19937 &device) :
-			blockSize(bSize), blockMass(bMass), width(w), height(h), blockTexture(bTexture), randDevice(
-					device) {
+	BlockManager(P bSize, P bMass, T w, T h, TextureManager &manager,
+			std::mt19937 &device) :
+			blockSize(bSize), blockMass(bMass), width(w), height(h), textureManager(
+					manager), randDevice(device) {
 	}
 
 	void add(Block<P> block) {
@@ -52,11 +54,34 @@ public:
 
 		T numBlocks = randsBlocks(randDevice);
 		for (T i = 0; i < numBlocks; i++) {
-			Block<P> block(blockSize, blockMass, 0, 0, blockTexture);
+			Block<P> block(blockSize, blockMass, 0, 0, selectRandomBlock());
 			P x = (int) (randsX(randDevice) / blockSize) * blockSize;
 			P y = (int) (randsY(randDevice) / blockSize) * blockSize;
 			block.setPosition(x, y);
 			blocks.push_back(block);
+		}
+	}
+
+	sf::Texture& selectRandomBlock() {
+		std::uniform_int_distribution<int> randGen(0, 5);
+		int randNum = randGen(randDevice);
+		switch (randNum) {
+		case 0:
+		case 1:
+		case 2:
+			return textureManager.getBlockTexture();
+		case 3:
+		case 4:
+		case 5: {
+			auto &textures = textureManager.getMagnetBlocks();
+			std::uniform_int_distribution<int> randMagnetBlock(0,
+					textures.size() - 1);
+			int selectedNumber = randMagnetBlock(randDevice);
+			return textureManager.getMagnetBlocks()[
+					selectedNumber >= 0 ? selectedNumber : 0];
+		}
+		default:
+			return textureManager.getBlockTexture();
 		}
 	}
 
@@ -105,7 +130,7 @@ private:
 	T blockSize;
 	T blockMass;
 	T width, height;
-	sf::Texture &blockTexture;
+	TextureManager &textureManager;
 	std::mt19937 &randDevice;
 	std::vector<Block<P>> blocks;
 };

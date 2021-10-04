@@ -24,9 +24,15 @@
  */
 
 #include <string>
+#include <SFML/Graphics.hpp>
 
 #include "../include/TextureManager.hpp"
 
 bool TextureManager::loadBlockTexture(std::string path) {
 	return blockTexture.loadFromFile(path);
+}
+
+bool TextureManager::loadMagnetBlockTextures(std::string path) {
+	magnetBlocks.push_back(sf::Texture());
+	return magnetBlocks.back().loadFromFile(path);
 }

@@ -43,8 +43,18 @@ Game::Game(std::string windowTitle, unsigned int width, unsigned int height) :
 		throw -999;
 	}
 
+	if (!textureManager.loadMagnetBlockTextures("res/Magnet Block Up.png")
+			|| !textureManager.loadMagnetBlockTextures(
+					"res/Magnet Block Down.png")
+			|| !textureManager.loadMagnetBlockTextures(
+					"res/Magnet Block Left.png")
+			|| !textureManager.loadMagnetBlockTextures(
+					"res/Magnet Block Right.png")) {
+		throw -999;
+	}
+
 	blockManager = new BlockManager<float, int>(50.f, 50.f, width, height,
-				textureManager.getBlockTexture(), randDevice);
+			textureManager, randDevice);
 }
 
 Game::~Game() {
@@ -94,7 +104,8 @@ void Game::handleMousePresses(sf::Event &event) {
 	switch (event.mouseButton.button) {
 	case sf::Mouse::Left: {
 		Block<float> block(blockManager->getBlockSize(),
-				blockManager->getBlockMass(), 0, 0, textureManager.getBlockTexture());
+				blockManager->getBlockMass(), 0, 0,
+				textureManager.getBlockTexture());
 		float x = (int) (event.mouseButton.x / blockManager->getBlockSize())
 				* blockManager->getBlockSize();
 		float y = (int) (event.mouseButton.y / blockManager->getBlockSize())
@@ -136,7 +147,8 @@ void Game::updateBlockPositions() {
 	for (Block<float> &block : blockManager->getBlocks()) {
 		block.move(block.getVx() * deltaTime.asSeconds(),
 				block.getVy() * deltaTime.asSeconds());
-		std::cout << "X: " << block.getPosition().x << ", Y: " << block.getPosition().y << std::endl;
+		std::cout << "X: " << block.getPosition().x << ", Y: "
+				<< block.getPosition().y << std::endl;
 	}
 }
 

@@ -27,11 +27,14 @@
 #define INCLUDE_TEXTUREMANAGER_HPP_
 
 #include <string>
+#include <vector>
+
 #include <SFML/Graphics.hpp>
 
 class TextureManager {
 public:
 	bool loadBlockTexture(std::string path);
+	bool loadMagnetBlockTextures(std::string path);
 
 	sf::Texture& getBlockTexture() {
 		return blockTexture;
@@ -41,8 +44,17 @@ public:
 		this->blockTexture = blockTexture;
 	}
 
+	std::vector<sf::Texture>& getMagnetBlocks() {
+		return magnetBlocks;
+	}
+
+	void setMagnetBlocks(std::vector<sf::Texture> &magnetBlocks) {
+		this->magnetBlocks = magnetBlocks;
+	}
+
 private:
 	sf::Texture blockTexture;
+	std::vector<sf::Texture> magnetBlocks;
 };
 
 #endif /* INCLUDE_TEXTUREMANAGER_HPP_ */
