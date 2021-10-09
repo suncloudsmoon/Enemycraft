@@ -34,6 +34,9 @@
 #include "../include/BlockManager.hpp"
 #include "../include/TextureManager.hpp"
 
+typedef int gen;
+typedef float accur;
+
 class Game {
 public:
 	Game(std::string windowTitle, unsigned int width, unsigned int height);
@@ -48,20 +51,21 @@ public:
 	void drawAllBlocks(sf::RenderWindow &window);
 
 	// Calculations
+	void updateBlockForces();
+	void updateBlockVelocity();
 	void updateBlockPositions();
+	void enforceBoxBounds(); // only temporary, changes as the player moves
 
 protected:
 private:
 	TextureManager textureManager;
 
 	std::mt19937 randDevice;
-	BlockManager<float, int> *blockManager;
+	BlockManager<accur, gen> *blockManager;
 
 	sf::Time deltaTime;
 	std::string title;
 	unsigned int w, h;
 };
-
-
 
 #endif /* INCLUDE_GAME_HPP_ */

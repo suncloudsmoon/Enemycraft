@@ -28,7 +28,11 @@
 #include "../include/Game.hpp"
 
 int main() {
-	Game g("Enemycraft - Just Imagine", 1920, 1080);
-	g.startGameLoop();
+	try {
+		Game g("Enemycraft - Just Imagine", 1920, 1080);
+		g.startGameLoop();
+	} catch (...) {
+		std::cerr << "An Exception Occurred!" << std::endl;
+	}
 }
 

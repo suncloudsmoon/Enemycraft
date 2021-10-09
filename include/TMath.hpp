@@ -17,33 +17,20 @@
  * SOFTWARE.
  */
 /*
- * TextureManager.cpp
+ * TMath.hpp
  *
- *  Created on: Oct 3, 2021
+ *  Created on: Oct 8, 2021
  *      Author: suncloudsmoon
  */
 
-#include <string>
-#include <SFML/Graphics.hpp>
+#ifndef INCLUDE_TMATH_HPP_
+#define INCLUDE_TMATH_HPP_
 
-#include "../include/TextureManager.hpp"
-
-bool TextureManager::loadNormalBlock(std::string path) {
-	return normalBlock.loadFromFile(path);
+namespace tma {
+template<class T>
+T abs(T x) {
+	return (x < 0) ? -x : x;
+}
 }
 
-bool TextureManager::loadMagnetUpBlock(std::string path) {
-	return magnetUpBlock.loadFromFile(path);
-}
-
-bool TextureManager::loadMagnetDownBlock(std::string path) {
-	return magnetDownBlock.loadFromFile(path);
-}
-
-bool TextureManager::loadMagnetLeftBlock(std::string path) {
-	return magnetDownBlock.loadFromFile(path);
-}
-
-bool TextureManager::loadMagnetRightBlock(std::string path) {
-	return magnetRightBlock.loadFromFile(path);
-}
+#endif /* INCLUDE_TMATH_HPP_ */

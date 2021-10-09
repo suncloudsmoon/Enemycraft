@@ -17,33 +17,45 @@
  * SOFTWARE.
  */
 /*
- * TextureManager.cpp
+ * Arr2D.hpp
  *
- *  Created on: Oct 3, 2021
+ *  Created on: Oct 6, 2021
  *      Author: suncloudsmoon
  */
 
-#include <string>
-#include <SFML/Graphics.hpp>
+#ifndef INCLUDE_ARR2D_HPP_
+#define INCLUDE_ARR2D_HPP_
 
-#include "../include/TextureManager.hpp"
+template<class T, class S>
+class Arr2D {
+public:
+	Arr2D(S numRows, S numColumns) :
+			rows(numRows), columns(numColumns) {
+		arr = new T[numRows * numColumns]();
+	}
+	~Arr2D() {
+		delete[] arr;
+	}
+	T& get(S x, S y) {
+		if (x >= rows || y >= columns) {
+			std::string err = "X or Y is out of range: (X: " + std::to_string(x)
+					+ ", Y: " + std::to_string(y) + "), (" + "Row: "
+					+ std::to_string(rows) + ", Col: " + std::to_string(columns)
+					+ ")";
+			throw std::out_of_range(err);
+		}
+		return arr[y * rows + x];
+	}
 
-bool TextureManager::loadNormalBlock(std::string path) {
-	return normalBlock.loadFromFile(path);
-}
+	T& operator()(S x, S y) {
+		return get(x, y);
+	}
+	void clear() {
+		std::fill_n(arr, rows * columns, 0);
+	}
+private:
+	T *arr;
+	S rows, columns;
+};
 
-bool TextureManager::loadMagnetUpBlock(std::string path) {
-	return magnetUpBlock.loadFromFile(path);
-}
-
-bool TextureManager::loadMagnetDownBlock(std::string path) {
-	return magnetDownBlock.loadFromFile(path);
-}
-
-bool TextureManager::loadMagnetLeftBlock(std::string path) {
-	return magnetDownBlock.loadFromFile(path);
-}
-
-bool TextureManager::loadMagnetRightBlock(std::string path) {
-	return magnetRightBlock.loadFromFile(path);
-}
+#endif /* INCLUDE_ARR2D_HPP_ */

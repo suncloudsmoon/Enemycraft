@@ -29,10 +29,13 @@
 #include <string>
 #include <vector>
 #include <random>
+#include <map>
 
 #include <SFML/Graphics.hpp>
 #include "Block.hpp"
 #include "TextureManager.hpp"
+#include "Point.hpp"
+#include "ForceTable.hpp"
 
 template<class P, class T>
 class BlockManager {
@@ -41,48 +44,99 @@ public:
 			std::mt19937 &device) :
 			blockSize(bSize), blockMass(bMass), width(w), height(h), textureManager(
 					manager), randDevice(device) {
+		forceTable = new ForceTable<T, P>(width / blockSize, height / blockSize,
+				blockSize);
+		magnetForce = 100; // in Newtons (N)
 	}
 
 	void add(Block<P> block) {
-		blocks.push_back(block);
+		// Learned: you cannot insert the same object twice
+		Point<T> coords = getBlockyCoordinates(block.getPosition().x,
+				block.getPosition().y);
+		addMagneticForce(coords, block);
+		blockMap.insert( { coords, block });
+	}
+
+	void addMagneticForce(const Point<T> &coords, const Block<P> &block) const {
+		switch (block.getMagnetFacingDirection()) {
+		// Up
+		case 1:
+			forceTable->addForce(coords.x, coords.y, 0, block.getMass());
+			break;
+			// Down
+		case 2:
+			forceTable->addForce(coords.x, coords.y, 0, -block.getMass());
+			break;
+			// Left
+		case 3:
+			forceTable->addForce(coords.x, coords.y, -block.getMass(), 0);
+			break;
+			// Right
+		case 4:
+			forceTable->addForce(coords.x, coords.y, block.getMass(), 0);
+			break;
+		default:
+			break;
+		}
+	}
+
+	void removeMagneticForce(const Point<T> &p, const Block<P> &block) const {
+		switch (block.getMagnetFacingDirection()) {
+		// Up
+		case 1:
+			forceTable->removeForce(p.x, p.y, 0, block.getMass());
+			break;
+			// Down
+		case 2:
+			forceTable->removeForce(p.x, p.y, 0, -block.getMass());
+			break;
+			// Left
+		case 3:
+			forceTable->removeForce(p.x, p.y, -block.getMass(), 0);
+			break;
+			// Right
+		case 4:
+			forceTable->removeForce(p.x, p.y, block.getMass(), 0);
+			break;
+		default:
+			break;
+		}
+	}
+
+	void remove(Point<T> p) {
+		// TODO: remove the force too here
+		auto &key = blockMap.at(p);
+		removeMagneticForce(p, key);
+		blockMap.erase(p);
 	}
 
 	void generateAll() {
 		std::uniform_int_distribution<T> randsBlocks(0, blockSize);
 		std::uniform_int_distribution<T> randsX(0, width - blockSize);
 		std::uniform_int_distribution<T> randsY(0, height - blockSize);
+		std::uniform_int_distribution<T> randMagnetism(0, 4);
 
 		T numBlocks = randsBlocks(randDevice);
 		for (T i = 0; i < numBlocks; i++) {
-			Block<P> block(blockSize, blockMass, 0, 0, selectRandomBlock());
-			P x = (int) (randsX(randDevice) / blockSize) * blockSize;
-			P y = (int) (randsY(randDevice) / blockSize) * blockSize;
+			Block<P> block(blockSize, blockMass, 0, 0, textureManager);
+			block.setMagnetFacingDirection(randMagnetism(randDevice));
+			T x = (T) (randsX(randDevice) / blockSize) * blockSize;
+			T y = (T) (randsY(randDevice) / blockSize) * blockSize;
 			block.setPosition(x, y);
-			blocks.push_back(block);
+			add(block);
 		}
 	}
 
-	sf::Texture& selectRandomBlock() {
-		std::uniform_int_distribution<int> randGen(0, 5);
-		int randNum = randGen(randDevice);
-		switch (randNum) {
-		case 0:
-		case 1:
-		case 2:
-			return textureManager.getBlockTexture();
-		case 3:
-		case 4:
-		case 5: {
-			auto &textures = textureManager.getMagnetBlocks();
-			std::uniform_int_distribution<int> randMagnetBlock(0,
-					textures.size() - 1);
-			int selectedNumber = randMagnetBlock(randDevice);
-			return textureManager.getMagnetBlocks()[
-					selectedNumber >= 0 ? selectedNumber : 0];
-		}
-		default:
-			return textureManager.getBlockTexture();
-		}
+	Point<T> getBlockyCoordinates(P x, P y) {
+		T newX = (T) (x / blockSize) * blockSize;
+		T newY = (T) (y / blockSize) * blockSize;
+		return Point<T>(newX, newY);
+	}
+
+	Point<T> getBlockyCoordinates(Point<P> p) {
+		T newX = (T) (p.x / blockSize) * blockSize;
+		T newY = (T) (p.y / blockSize) * blockSize;
+		return Point<T>(newX, newY);
 	}
 
 	T getBlockMass() const {
@@ -118,21 +172,33 @@ public:
 	}
 
 	// Need to be careful with getters and setters; they can introduce bugs into code!
-	std::vector<Block<P> >& getBlocks() {
-		return blocks;
+	std::map<Point<T>, Block<P> >& getBlockMap() {
+		return blockMap;
 	}
 
-	void setBlocks(const std::vector<Block<P> > &blocks) {
-		this->blocks = blocks;
+	void setBlockMap(std::map<Point<T>, Block<P> > &blockMap) {
+		this->blockMap = blockMap;
+	}
+
+	ForceTable<T, P>*& getForceTable() {
+		return forceTable;
+	}
+
+	void setForceTable(ForceTable<T, P> *&forceTable) {
+		this->forceTable = forceTable;
 	}
 
 private:
+	std::map<Point<T>, Block<P>> blockMap;
+	ForceTable<T, P> *forceTable;
+
 	T blockSize;
 	T blockMass;
 	T width, height;
 	TextureManager &textureManager;
 	std::mt19937 &randDevice;
-	std::vector<Block<P>> blocks;
+
+	T magnetForce; // assumed to be positive
 };
 
 #endif /* INCLUDE_BLOCKMANAGER_HPP_ */

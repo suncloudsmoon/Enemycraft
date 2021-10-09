@@ -26,7 +26,11 @@
 #ifndef INCLUDE_BLOCK_HPP_
 #define INCLUDE_BLOCK_HPP_
 
+#include <vector>
 #include <SFML/Graphics.hpp>
+
+#include "Point.hpp"
+#include "TextureManager.hpp"
 
 /*
  * There are four states of a block: 0,1-4
@@ -41,10 +45,26 @@
 template<class T>
 class Block: public sf::Sprite {
 public:
-	Block(T len, T m, T velocityX, T velocityY, sf::Texture &texture) :
-		sf::Sprite(texture), length(len), mass(m), vx(
-					velocityX), vy(velocityY) {
+	Block(T len, T m, T velocityX, T velocityY, TextureManager &manager) :
+			sf::Sprite(manager.getNormalBlock()), length(len), mass(m), vx(
+					velocityX), vy(velocityY), textureManager(manager) {
 		magnetFacingDirection = 0; // default
+	}
+
+	void moveWithStats(T x, T y) {
+		previousCoord.x = getPosition().x;
+		previousCoord.y = getPosition().y;
+		setPosition(getPosition().x + (float) x, getPosition().y + (float) y);
+	}
+
+	void setPosWithStats(T x, T y) {
+		previousCoord.x = getPosition().x;
+		previousCoord.y = getPosition().y;
+		setPosition((float) x, (float) y);
+	}
+
+	bool isMagnetic() {
+		return magnetFacingDirection >= 1 && magnetFacingDirection <= 4;
 	}
 
 	T getLength() const {
@@ -60,7 +80,29 @@ public:
 	}
 
 	void setMagnetFacingDirection(int magnetFacingDirection) {
-		this->magnetFacingDirection = magnetFacingDirection;
+		if (magnetFacingDirection <= 4) {
+			switch (magnetFacingDirection) {
+			case 0:
+				setTexture(textureManager.getNormalBlock());
+				break;
+			case 1:
+				setTexture(textureManager.getMagnetUpBlock());
+				break;
+			case 2:
+				setTexture(textureManager.getMagnetDownBlock());
+				break;
+			case 3:
+				setTexture(textureManager.getMagnetLeftBlock());
+				break;
+			case 4:
+				setTexture(textureManager.getMagnetRightBlock());
+				break;
+			default:
+				setTexture(textureManager.getNormalBlock());
+				break;
+			}
+			this->magnetFacingDirection = magnetFacingDirection;
+		}
 	}
 
 	T getMass() const {
@@ -87,10 +129,23 @@ public:
 		this->vy = vy;
 	}
 
+	const Point<T>& getPreviousCoord() const {
+		return previousCoord;
+	}
+
+	void setPreviousCoord(const Point<T> &previousCoord) {
+		this->previousCoord = previousCoord;
+	}
+
 private:
 	T length;
 	T mass; // in kg
+
 	T vx, vy;
+	Point<T> previousCoord;
+
+	TextureManager &textureManager;
+
 	int magnetFacingDirection;
 };
 

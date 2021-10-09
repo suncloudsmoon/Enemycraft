@@ -33,28 +33,55 @@
 
 class TextureManager {
 public:
-	bool loadBlockTexture(std::string path);
-	bool loadMagnetBlockTextures(std::string path);
+	bool loadNormalBlock(std::string path);
+	bool loadMagnetUpBlock(std::string path);
+	bool loadMagnetDownBlock(std::string path);
+	bool loadMagnetLeftBlock(std::string path);
+	bool loadMagnetRightBlock(std::string path);
 
-	sf::Texture& getBlockTexture() {
-		return blockTexture;
+	sf::Texture& getMagnetDownBlock() {
+		return magnetDownBlock;
 	}
 
-	void setBlockTexture(sf::Texture &blockTexture) {
-		this->blockTexture = blockTexture;
+	void setMagnetDownBlock(sf::Texture &magnetDownBlock) {
+		this->magnetDownBlock = magnetDownBlock;
 	}
 
-	std::vector<sf::Texture>& getMagnetBlocks() {
-		return magnetBlocks;
+	sf::Texture& getMagnetLeftBlock() {
+		return magnetLeftBlock;
 	}
 
-	void setMagnetBlocks(std::vector<sf::Texture> &magnetBlocks) {
-		this->magnetBlocks = magnetBlocks;
+	void setMagnetLeftBlock(sf::Texture &magnetLeftBlock) {
+		this->magnetLeftBlock = magnetLeftBlock;
+	}
+
+	sf::Texture& getMagnetRightBlock() {
+		return magnetRightBlock;
+	}
+
+	void setMagnetRightBlock(sf::Texture &magnetRightBlock) {
+		this->magnetRightBlock = magnetRightBlock;
+	}
+
+	sf::Texture& getMagnetUpBlock() {
+		return magnetUpBlock;
+	}
+
+	void setMagnetUpBlock(sf::Texture &magnetUpBlock) {
+		this->magnetUpBlock = magnetUpBlock;
+	}
+
+	sf::Texture& getNormalBlock() {
+		return normalBlock;
+	}
+
+	void setNormalBlock(sf::Texture &normalBlock) {
+		this->normalBlock = normalBlock;
 	}
 
 private:
-	sf::Texture blockTexture;
-	std::vector<sf::Texture> magnetBlocks;
+	sf::Texture normalBlock, magnetUpBlock, magnetDownBlock, magnetLeftBlock,
+			magnetRightBlock;
 };
 
 #endif /* INCLUDE_TEXTUREMANAGER_HPP_ */

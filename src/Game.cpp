@@ -32,28 +32,25 @@
 #include <iostream>
 
 #include "../include/Game.hpp"
+#include "../include/TMath.hpp"
 
 Game::Game(std::string windowTitle, unsigned int width, unsigned int height) :
 		title(windowTitle), w(width), h(height) {
-	deltaTime = sf::Time::Zero;
 	randDevice.seed(time(NULL));
+	deltaTime = sf::Time::Zero;
 
 	// Loading textures from image files in res folder
-	if (!textureManager.loadBlockTexture("res/Block.png")) {
+	if (!textureManager.loadNormalBlock("res/Block.png")
+			|| !textureManager.loadMagnetUpBlock("res/Magnet_Block_Up.png")
+			|| !textureManager.loadMagnetDownBlock("res/Magnet_Block_Down.png")
+			|| !textureManager.loadMagnetLeftBlock("res/Magnet_Block_Left.png")
+			|| !textureManager.loadMagnetRightBlock(
+					"res/Magnet_Block_Right.png")) {
+		std::cerr << "err loading textures!" << std::endl;
 		throw -999;
 	}
 
-	if (!textureManager.loadMagnetBlockTextures("res/Magnet Block Up.png")
-			|| !textureManager.loadMagnetBlockTextures(
-					"res/Magnet Block Down.png")
-			|| !textureManager.loadMagnetBlockTextures(
-					"res/Magnet Block Left.png")
-			|| !textureManager.loadMagnetBlockTextures(
-					"res/Magnet Block Right.png")) {
-		throw -999;
-	}
-
-	blockManager = new BlockManager<float, int>(50.f, 50.f, width, height,
+	blockManager = new BlockManager<accur, gen>(50.f, 5.f, width, height,
 			textureManager, randDevice);
 }
 
@@ -76,7 +73,10 @@ void Game::startGameLoop() {
 			handleAllUserInteractions(event, window);
 		}
 		// Calculations
+		updateBlockForces();
+		updateBlockVelocity();
 		updateBlockPositions();
+		enforceBoxBounds();
 
 		window.clear(sf::Color::Black);
 		drawAllBlocks(window);
@@ -103,19 +103,37 @@ void Game::handleAllUserInteractions(sf::Event &event,
 void Game::handleMousePresses(sf::Event &event) {
 	switch (event.mouseButton.button) {
 	case sf::Mouse::Left: {
-		Block<float> block(blockManager->getBlockSize(),
-				blockManager->getBlockMass(), 0, 0,
-				textureManager.getBlockTexture());
-		float x = (int) (event.mouseButton.x / blockManager->getBlockSize())
+		Point<gen> gridCoord;
+		gridCoord.x = (gen) (event.mouseButton.x / blockManager->getBlockSize())
 				* blockManager->getBlockSize();
-		float y = (int) (event.mouseButton.y / blockManager->getBlockSize())
+		gridCoord.y = (gen) (event.mouseButton.y / blockManager->getBlockSize())
 				* blockManager->getBlockSize();
-		block.setPosition(x, y);
-		blockManager->add(block);
+
+		auto &map = blockManager->getBlockMap();
+		if (map.find(gridCoord) == map.end()) {
+			Block<accur> block(blockManager->getBlockSize(),
+					blockManager->getBlockMass(), 0, 0, textureManager);
+			block.setPosition(gridCoord.x, gridCoord.y);
+			blockManager->add(block);
+		} else {
+			blockManager->remove(gridCoord);
+		}
+
 		break;
 	}
-	case sf::Mouse::Right:
+	case sf::Mouse::Right: {
+		const Point<gen> coords = blockManager->getBlockyCoordinates(
+				event.mouseButton.x, event.mouseButton.y);
+		auto &map = blockManager->getBlockMap();
+		if (map.find(coords) != map.end()) {
+			auto &key = map.at(coords);
+			size_t magnetFacingDirection = key.getMagnetFacingDirection();
+			key.setMagnetFacingDirection(
+					(magnetFacingDirection > 4) ?
+							1 : magnetFacingDirection + 1);
+		}
 		break;
+	}
 	default:
 		break;
 	}
@@ -137,18 +155,63 @@ void Game::handleKeyPresses(sf::Event &event) {
 }
 
 void Game::drawAllBlocks(sf::RenderWindow &window) {
-	for (sf::Sprite &sprite : blockManager->getBlocks()) {
-		window.draw(sprite);
+	for (auto& [key, val] : blockManager->getBlockMap()) {
+		window.draw(val);
+	}
+}
+
+void Game::updateBlockForces() {
+	for (auto& [key, val] : blockManager->getBlockMap()) {
+		// TODO: make it not calculate unnecessarily if the magnetic block isn't moving
+		if (val.isMagnetic()) {
+			Point<gen> previousCoord = blockManager->getBlockyCoordinates(
+					val.getPreviousCoord());
+			blockManager->removeMagneticForce(previousCoord, val);
+			blockManager->addMagneticForce(
+					Point<gen>(val.getPosition().x, val.getPosition().y), val);
+		}
 	}
 }
 
 // Calculate block position based on velocity
-void Game::updateBlockPositions() {
-	for (Block<float> &block : blockManager->getBlocks()) {
-		block.move(block.getVx() * deltaTime.asSeconds(),
-				block.getVy() * deltaTime.asSeconds());
-		std::cout << "X: " << block.getPosition().x << ", Y: "
-				<< block.getPosition().y << std::endl;
+
+// A = F/M
+void Game::updateBlockVelocity() {
+	for (auto& [key, val] : blockManager->getBlockMap()) {
+		Point<gen> coord = blockManager->getBlockyCoordinates(
+				val.getPosition().x, val.getPosition().y);
+		Point<accur> f = blockManager->getForceTable()->getForce(coord.x,
+				coord.y);
+		val.setVx(val.getVx() + (f.x / val.getMass()));
+		val.setVy(val.getVy() + (f.y / val.getMass()));
+		std::cout << "fx: " << f.x << ", fy: " << f.y << std::endl;
 	}
 }
 
+void Game::updateBlockPositions() {
+	for (auto& [key, val] : blockManager->getBlockMap()) {
+		val.move(val.getVx() * deltaTime.asSeconds(),
+				val.getVy() * deltaTime.asSeconds());
+		// Debug
+		std::cout << "Vx: " << val.getVx() << ", Vy: " << val.getVy()
+				<< std::endl;
+	}
+}
+
+void Game::enforceBoxBounds() {
+	for (auto& [key, val] : blockManager->getBlockMap()) {
+		const sf::Vector2f &pos = val.getPosition();
+		if (pos.x < 0) {
+			// Set velocity greater than zero
+			val.setVx(tma::abs(val.getVx()));
+		} else if (pos.x > w) {
+			val.setVx(val.getVx() < 0 ? val.getVx() : -val.getVx());
+		}
+
+		if (pos.y < 0) {
+			val.setVy(tma::abs(val.getVy()));
+		} else if (pos.y > w) {
+			val.setVy(val.getVy() < 0 ? val.getVy() : -val.getVy());
+		}
+	}
+}
