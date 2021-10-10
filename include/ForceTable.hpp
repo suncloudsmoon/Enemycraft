@@ -30,7 +30,7 @@
 #include <string>
 #include <sstream>
 #include <array>
-#include "Arr2D.hpp"
+#include <Arr2D.hpp>
 
 // G - general data points, P - precision data points
 template<class G, class P>
@@ -48,34 +48,34 @@ public:
 	/*
 	 * fx, fy is negative/positive
 	 */
-	void addForce(G x, G y, P forceX, P forceY) {
-		x = x / blockSize;
-		y = y / blockSize;
-		if (x < 0 || x >= w || y < 0 || y >= h) {
+	void addForce(P x, P y, P forceX, P forceY) {
+		G newX = (G) (x / blockSize);
+		G newY = (G) (y / blockSize);
+		if (newX < 0 || newX >= w || newY < 0 || newY >= h) {
 			return;
 		}
 		if (fx > 0) {
-			for (G i = x + 1; i < w; i++) {
-				fx->get(i, y) += forceX;
+			for (G i = newX + 1; i < w; i++) {
+				fx->get(i, newY) += forceX;
 			}
 		} else if (fx < 0) {
-			for (G i = x - 1; i >= 0; i--) {
-				fx->get(i, y) += forceX;
+			for (G i = newX - 1; i >= 0; i--) {
+				fx->get(i, newY) += forceX;
 			}
 		}
 
 		if (fy > 0) {
-			for (G i = y + 1; i < h; i++) {
-				fy->get(x, i) += forceY;
+			for (G i = newY + 1; i < h; i++) {
+				fy->get(newX, i) += forceY;
 			}
 		} else if (fy < 0) {
-			for (G i = y - 1; i >= 0; i--) {
-				fy->get(x, i) += forceY;
+			for (G i = newY - 1; i >= 0; i--) {
+				fy->get(newX, i) += forceY;
 			}
 		}
 	}
 
-	void removeForce(G x, G y, P forceX, P forceY) {
+	void removeForce(P x, P y, P forceX, P forceY) {
 		addForce(x, y, -forceX, -forceY);
 	}
 
@@ -88,16 +88,19 @@ public:
 		}
 	}
 
-	Point<P> getForce(G x, G y) {
-		G accessX = x / blockSize, accessY = y / blockSize;
+	Point<P> getForce(P x, P y) {
+		G accessX = (G) (x / blockSize);
+		G accessY = (G) (y / blockSize);
 		if (accessX < w && accessY < h) {
-			return Point<P> { fx->get(accessX, accessY), fy->get(accessX, accessY) };
+			return Point<P> { fx->get(accessX, accessY), fy->get(accessX,
+					accessY) };
 		} else {
 			return Point<P>();
 		}
 
 	}
 
+	// TODO: fix this algorithm
 	void serialize(std::string &dest) {
 		dest += w + " " + h + "\n";
 		for (G row = 0; row < h; row++) {

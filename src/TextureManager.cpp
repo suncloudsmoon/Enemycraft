@@ -26,7 +26,7 @@
 #include <string>
 #include <SFML/Graphics.hpp>
 
-#include "../include/TextureManager.hpp"
+#include <TextureManager.hpp>
 
 bool TextureManager::loadNormalBlock(std::string path) {
 	return normalBlock.loadFromFile(path);
@@ -41,7 +41,7 @@ bool TextureManager::loadMagnetDownBlock(std::string path) {
 }
 
 bool TextureManager::loadMagnetLeftBlock(std::string path) {
-	return magnetDownBlock.loadFromFile(path);
+	return magnetLeftBlock.loadFromFile(path);
 }
 
 bool TextureManager::loadMagnetRightBlock(std::string path) {

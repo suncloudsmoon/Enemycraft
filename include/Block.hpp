@@ -45,9 +45,11 @@
 template<class T>
 class Block: public sf::Sprite {
 public:
-	Block(T len, T m, T velocityX, T velocityY, TextureManager &manager) :
+	Block(T len, T m, T velocityX, T velocityY, float muConstant,
+			TextureManager &manager) :
 			sf::Sprite(manager.getNormalBlock()), length(len), mass(m), vx(
-					velocityX), vy(velocityY), textureManager(manager) {
+					velocityX), vy(velocityY), mu(muConstant), textureManager(
+					manager) {
 		magnetFacingDirection = 0; // default
 	}
 
@@ -67,6 +69,13 @@ public:
 		return magnetFacingDirection >= 1 && magnetFacingDirection <= 4;
 	}
 
+	bool operator==(const Block<T> &b) const {
+		sf::Vector2f &aPos = getPosition();
+		sf::Vector2f &bPos = getPosition();
+		return (((aPos.x / length) * length) == ((bPos.x / length) * length))
+				&& (((aPos.y / length) * length) == ((bPos.y / length) * length));
+	}
+
 	T getLength() const {
 		return length;
 	}
@@ -80,29 +89,27 @@ public:
 	}
 
 	void setMagnetFacingDirection(int magnetFacingDirection) {
-		if (magnetFacingDirection <= 4) {
-			switch (magnetFacingDirection) {
-			case 0:
-				setTexture(textureManager.getNormalBlock());
-				break;
-			case 1:
-				setTexture(textureManager.getMagnetUpBlock());
-				break;
-			case 2:
-				setTexture(textureManager.getMagnetDownBlock());
-				break;
-			case 3:
-				setTexture(textureManager.getMagnetLeftBlock());
-				break;
-			case 4:
-				setTexture(textureManager.getMagnetRightBlock());
-				break;
-			default:
-				setTexture(textureManager.getNormalBlock());
-				break;
-			}
-			this->magnetFacingDirection = magnetFacingDirection;
+		switch (magnetFacingDirection) {
+		case 0:
+			setTexture(textureManager.getNormalBlock());
+			break;
+		case 1:
+			setTexture(textureManager.getMagnetUpBlock());
+			break;
+		case 2:
+			setTexture(textureManager.getMagnetDownBlock());
+			break;
+		case 3:
+			setTexture(textureManager.getMagnetLeftBlock());
+			break;
+		case 4:
+			setTexture(textureManager.getMagnetRightBlock());
+			break;
+		default:
+			setTexture(textureManager.getNormalBlock());
+			break;
 		}
+		this->magnetFacingDirection = magnetFacingDirection;
 	}
 
 	T getMass() const {
@@ -137,16 +144,25 @@ public:
 		this->previousCoord = previousCoord;
 	}
 
+	float getMu() const {
+		return mu;
+	}
+
+	void setMu(float mu) {
+		this->mu = mu;
+	}
+
 private:
 	T length;
 	T mass; // in kg
 
 	T vx, vy;
-	Point<T> previousCoord;
 
+	float mu; // between 0 and 1
 	TextureManager &textureManager;
 
 	int magnetFacingDirection;
+	Point<T> previousCoord;
 };
 
 #endif /* INCLUDE_BLOCK_HPP_ */

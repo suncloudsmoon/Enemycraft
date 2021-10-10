@@ -25,14 +25,19 @@
 
 #include <iostream>
 
-#include "../include/Game.hpp"
+#include <Game.hpp>
+#include <Point.hpp>
+
+const Point<unsigned int> fullHD(1920, 1080);
 
 int main() {
 	try {
-		Game g("Enemycraft - Just Imagine", 1920, 1080);
+		Game g("Enemycraft - Just Imagine", fullHD);
 		g.startGameLoop();
+	} catch (std::exception &e) {
+		std::cerr << "Oops, an exception: " << e.what() << std::endl;
 	} catch (...) {
-		std::cerr << "An Exception Occurred!" << std::endl;
+		std::cerr << "An Unknown Exception Occurred!" << std::endl;
 	}
 }
 

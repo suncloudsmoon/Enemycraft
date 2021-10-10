@@ -29,102 +29,122 @@
 #include <string>
 #include <vector>
 #include <random>
-#include <map>
 
 #include <SFML/Graphics.hpp>
-#include "Block.hpp"
-#include "TextureManager.hpp"
-#include "Point.hpp"
-#include "ForceTable.hpp"
+#include <Block.hpp>
+#include <TextureManager.hpp>
+#include <Point.hpp>
+#include <ForceTable.hpp>
+#include <BlockArr2D.hpp>
 
 template<class P, class T>
 class BlockManager {
 public:
-	BlockManager(P bSize, P bMass, T w, T h, TextureManager &manager,
-			std::mt19937 &device) :
-			blockSize(bSize), blockMass(bMass), width(w), height(h), textureManager(
+	BlockManager(P bSize, P bMass, T w, T h, float defaultMuConstant,
+			TextureManager &manager, std::mt19937 &device) :
+			blockSize(bSize), blockMass(bMass), width(w / bSize), height(
+					h / bSize), defaultMu(defaultMuConstant), textureManager(
 					manager), randDevice(device) {
-		forceTable = new ForceTable<T, P>(width / blockSize, height / blockSize,
-				blockSize);
-		magnetForce = 100; // in Newtons (N)
+		blockMap = new BlockArr2D<P, T>(width, height, blockSize);
+		forceTable = new ForceTable<T, P>(width, height, blockSize);
+		magnetForce = 100;
+
+		// Debug Messages
+		std::cout << "BlockManager width: " << width << ", height: " << height
+				<< std::endl;
 	}
 
-	void add(Block<P> block) {
+	void add(Block<P> *block) {
 		// Learned: you cannot insert the same object twice
-		Point<T> coords = getBlockyCoordinates(block.getPosition().x,
-				block.getPosition().y);
-		addMagneticForce(coords, block);
-		blockMap.insert( { coords, block });
+		Point<P> blockCoord(block->getPosition().x, block->getPosition().y);
+		addMagneticForce(blockCoord, block);
+		blockMap->add(blockCoord, block);
 	}
 
-	void addMagneticForce(const Point<T> &coords, const Block<P> &block) const {
-		switch (block.getMagnetFacingDirection()) {
+	void remove(Point<P> &p) {
+		remove(p.x, p.y);
+	}
+
+	void remove(P x, P y) {
+		Block<P> *block = blockMap->get(x, y);
+		removeMagneticForce(x, y, block);
+		blockMap->remove(x, y);
+	}
+
+	void addMagneticForce(const Point<P> &coords, const Block<P> *block) const {
+		addMagneticForce(coords.x, coords.y, block);
+	}
+
+	void addMagneticForce(P x, P y, const Block<P> *block) const {
+		switch (block->getMagnetFacingDirection()) {
 		// Up
 		case 1:
-			forceTable->addForce(coords.x, coords.y, 0, block.getMass());
+			forceTable->addForce(x, y, 0, block->getMass());
 			break;
 			// Down
 		case 2:
-			forceTable->addForce(coords.x, coords.y, 0, -block.getMass());
+			forceTable->addForce(x, y, 0, -block->getMass());
 			break;
 			// Left
 		case 3:
-			forceTable->addForce(coords.x, coords.y, -block.getMass(), 0);
+			forceTable->addForce(x, y, -block->getMass(), 0);
 			break;
 			// Right
 		case 4:
-			forceTable->addForce(coords.x, coords.y, block.getMass(), 0);
+			forceTable->addForce(x, y, block->getMass(), 0);
 			break;
 		default:
 			break;
 		}
 	}
 
-	void removeMagneticForce(const Point<T> &p, const Block<P> &block) const {
-		switch (block.getMagnetFacingDirection()) {
+	void removeMagneticForce(const Point<P> &p, const Block<P> *block) const {
+		removeMagneticForce(p.x, p.y, block);
+	}
+
+	void removeMagneticForce(P x, P y, const Block<P> *block) const {
+		switch (block->getMagnetFacingDirection()) {
 		// Up
 		case 1:
-			forceTable->removeForce(p.x, p.y, 0, block.getMass());
+			forceTable->removeForce(x, y, 0, block->getMass());
 			break;
 			// Down
 		case 2:
-			forceTable->removeForce(p.x, p.y, 0, -block.getMass());
+			forceTable->removeForce(x, y, 0, -block->getMass());
 			break;
 			// Left
 		case 3:
-			forceTable->removeForce(p.x, p.y, -block.getMass(), 0);
+			forceTable->removeForce(x, y, -block->getMass(), 0);
 			break;
 			// Right
 		case 4:
-			forceTable->removeForce(p.x, p.y, block.getMass(), 0);
+			forceTable->removeForce(x, y, block->getMass(), 0);
 			break;
 		default:
 			break;
 		}
-	}
-
-	void remove(Point<T> p) {
-		// TODO: remove the force too here
-		auto &key = blockMap.at(p);
-		removeMagneticForce(p, key);
-		blockMap.erase(p);
 	}
 
 	void generateAll() {
 		std::uniform_int_distribution<T> randsBlocks(0, blockSize);
-		std::uniform_int_distribution<T> randsX(0, width - blockSize);
-		std::uniform_int_distribution<T> randsY(0, height - blockSize);
+		std::uniform_int_distribution<T> randsX(0, width);
+		std::uniform_int_distribution<T> randsY(0, height);
 		std::uniform_int_distribution<T> randMagnetism(0, 4);
 
 		T numBlocks = randsBlocks(randDevice);
 		for (T i = 0; i < numBlocks; i++) {
-			Block<P> block(blockSize, blockMass, 0, 0, textureManager);
-			block.setMagnetFacingDirection(randMagnetism(randDevice));
-			T x = (T) (randsX(randDevice) / blockSize) * blockSize;
-			T y = (T) (randsY(randDevice) / blockSize) * blockSize;
-			block.setPosition(x, y);
+			Block<P> *block = new Block<P>(blockSize, blockMass, 0, 0,
+					defaultMu, textureManager);
+			block->setMagnetFacingDirection(randMagnetism(randDevice));
+			T x = (T) (randsX(randDevice) * blockSize) - blockSize;
+			T y = (T) (randsY(randDevice) * blockSize) - blockSize;
+			block->setPosition(x, y);
 			add(block);
 		}
+	}
+
+	Point<T> getBlockyCoordinates(Point<P> &p) {
+		return getBlockyCoordinates(p.x, p.y);
 	}
 
 	Point<T> getBlockyCoordinates(P x, P y) {
@@ -133,11 +153,8 @@ public:
 		return Point<T>(newX, newY);
 	}
 
-	Point<T> getBlockyCoordinates(Point<P> p) {
-		T newX = (T) (p.x / blockSize) * blockSize;
-		T newY = (T) (p.y / blockSize) * blockSize;
-		return Point<T>(newX, newY);
-	}
+	// LEARNED: Need to be careful with getters and setters; they can introduce bugs into code!
+	// Getters and Setters
 
 	T getBlockMass() const {
 		return blockMass;
@@ -171,15 +188,6 @@ public:
 		this->width = width;
 	}
 
-	// Need to be careful with getters and setters; they can introduce bugs into code!
-	std::map<Point<T>, Block<P> >& getBlockMap() {
-		return blockMap;
-	}
-
-	void setBlockMap(std::map<Point<T>, Block<P> > &blockMap) {
-		this->blockMap = blockMap;
-	}
-
 	ForceTable<T, P>*& getForceTable() {
 		return forceTable;
 	}
@@ -188,17 +196,27 @@ public:
 		this->forceTable = forceTable;
 	}
 
+	BlockArr2D<P, T>*& getBlockMap() {
+		return blockMap;
+	}
+
+	void setBlockMap(BlockArr2D<P, T> *&blockMap) {
+		this->blockMap = blockMap;
+	}
+
 private:
-	std::map<Point<T>, Block<P>> blockMap;
+	BlockArr2D<P, T> *blockMap;
 	ForceTable<T, P> *forceTable;
 
 	T blockSize;
 	T blockMass;
 	T width, height;
+	float defaultMu;
+
 	TextureManager &textureManager;
 	std::mt19937 &randDevice;
 
-	T magnetForce; // assumed to be positive
+	T magnetForce; // ASSUMPTION: magnetForce >= 0 Newtons
 };
 
 #endif /* INCLUDE_BLOCKMANAGER_HPP_ */

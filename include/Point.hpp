@@ -111,11 +111,14 @@ public:
 		return *this;
 	}
 
-	std::size_t operator()(const Point<T> &p) const {
-		return std::hash<T>{}(p.x) ^ (std::hash<T>{}(p.y) << 1);
-	}
-
 	T x, y;
+};
+
+template<class T>
+struct std::hash<Point<T>> {
+	std::size_t operator()(const Point<T> &p) const {
+		return p.x ^ (p.y << 1);
+	}
 };
 
 #endif /* INCLUDE_POINT_HPP_ */

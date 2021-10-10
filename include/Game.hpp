@@ -39,6 +39,7 @@ typedef float accur;
 
 class Game {
 public:
+	Game(std::string windowTitle, const Point<unsigned int> &dimensions);
 	Game(std::string windowTitle, unsigned int width, unsigned int height);
 	~Game();
 
@@ -58,10 +59,12 @@ public:
 
 protected:
 private:
+	BlockManager<accur, gen> *blockManager;
+	std::mt19937 randDevice;
 	TextureManager textureManager;
 
-	std::mt19937 randDevice;
-	BlockManager<accur, gen> *blockManager;
+	accur defaultMu;
+	accur defaultBlockSize;
 
 	sf::Time deltaTime;
 	std::string title;
