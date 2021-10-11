@@ -81,10 +81,10 @@ void Game::startGameLoop() {
 			handleAllUserInteractions(event, window);
 		}
 		// Calculations
-//		updateBlockForces();
-//		updateBlockVelocity();
-//		enforceBoxBounds();
-//		updateBlockPositions();
+		updateBlockForces();
+		updateBlockVelocity();
+		enforceBoxBounds();
+		updateBlockPositions();
 
 		window.clear(sf::Color::Black);
 		drawAllBlocks(window);
@@ -167,7 +167,7 @@ void Game::handleKeyPresses(sf::Event &event) {
 void Game::drawAllBlocks(sf::RenderWindow &window) {
 	for (gen i = 0; i < blockManager->getBlockMap()->getSize(); i++) {
 		Block<accur> *block = blockManager->getBlockMap()->getArr()[i];
-		if (block != NULL) {
+		if (block != nullptr) {
 			window.draw(*block);
 		}
 	}
@@ -176,19 +176,15 @@ void Game::drawAllBlocks(sf::RenderWindow &window) {
 void Game::updateBlockForces() {
 	for (gen i = 0; i < blockManager->getBlockMap()->getSize(); i++) {
 		Block<accur> *block = blockManager->getBlockMap()->getArr()[i];
-		if (block == NULL) {
+		if (block == nullptr) {
 			continue;
 		}
 		// TODO: make it not calculate unnecessarily if the magnetic block isn't moving
 		if (block->isMagnetic()) {
-			Point<accur> blockPos { block->getPosition().x,
-					block->getPosition().y };
+			Point<gen> blockPos = blockManager->getBlockyCoordinates(
+					block->getPosition().x, block->getPosition().y);
 			blockManager->removeMagneticForce(block->getPreviousCoord(), block);
 			blockManager->addMagneticForce(blockPos.x, blockPos.y, block);
-			Point<accur> force = blockManager->getForceTable()->getForce(
-					block->getPosition().x, block->getPosition().y);
-			blockManager->getForceTable()->addForce(blockPos.x, blockPos.y,
-					-(force.x * block->getMu()), -(force.y * block->getMu()));
 		}
 	}
 }
@@ -199,10 +195,10 @@ void Game::updateBlockForces() {
 void Game::updateBlockVelocity() {
 	for (gen i = 0; i < blockManager->getBlockMap()->getSize(); i++) {
 		Block<accur> *block = blockManager->getBlockMap()->getArr()[i];
-		if (block == NULL) {
+		if (block == nullptr) {
 			continue;
 		}
-		Point<gen> pos(block->getPosition().x, block->getPosition().y);
+		Point<gen> pos = blockManager->getBlockyCoordinates(block->getPosition().x, block->getPosition().y);
 		Point<accur> f = blockManager->getForceTable()->getForce(pos.x, pos.y);
 		block->setVx(block->getVx() + (f.x / block->getMass()));
 		block->setVy(block->getVy() + (f.y / block->getMass()));
@@ -215,20 +211,20 @@ void Game::updateBlockVelocity() {
 void Game::enforceBoxBounds() {
 	for (gen i = 0; i < blockManager->getBlockMap()->getSize(); i++) {
 		Block<accur> *block = blockManager->getBlockMap()->getArr()[i];
-		if (block == NULL) {
+		if (block == nullptr) {
 			continue;
 		}
 		const sf::Vector2f &pos = block->getPosition();
 		if (pos.x < 0) {
 			// Set velocity greater than zero
 			block->setVx(tma::abs(block->getVx()));
-		} else if (pos.x > w) {
+		} else if (pos.x + block->getLength() > w) {
 			block->setVx(block->getVx() < 0 ? block->getVx() : -block->getVx());
 		}
 
 		if (pos.y < 0) {
 			block->setVy(tma::abs(block->getVy()));
-		} else if (pos.y > w) {
+		} else if (pos.y + block->getLength() > w) {
 			block->setVy(block->getVy() < 0 ? block->getVy() : -block->getVy());
 		}
 	}
@@ -237,7 +233,7 @@ void Game::enforceBoxBounds() {
 void Game::updateBlockPositions() {
 	for (gen i = 0; i < blockManager->getBlockMap()->getSize(); i++) {
 		Block<accur> *block = blockManager->getBlockMap()->getArr()[i];
-		if (block == NULL) {
+		if (block == nullptr) {
 			continue;
 		}
 		accur deltaX = block->getVx() * deltaTime.asSeconds();

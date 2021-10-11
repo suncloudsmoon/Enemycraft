@@ -54,14 +54,12 @@ public:
 	}
 
 	void moveWithStats(T x, T y) {
-		previousCoord.x = getPosition().x;
-		previousCoord.y = getPosition().y;
-		setPosition(getPosition().x + (float) x, getPosition().y + (float) y);
+		setPosWithStats(getPosition().x + (float) x, getPosition().y + (float) y);
 	}
 
 	void setPosWithStats(T x, T y) {
-		previousCoord.x = getPosition().x;
-		previousCoord.y = getPosition().y;
+		previousCoord.x = (getPosition().x / length) * length;
+		previousCoord.y = (getPosition().y / length) * length;
 		setPosition((float) x, (float) y);
 	}
 
