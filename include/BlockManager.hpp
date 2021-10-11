@@ -58,7 +58,7 @@ public:
 		// Learned: you cannot insert the same object twice
 		Point<P> blockCoord(block->getPosition().x, block->getPosition().y);
 		addMagneticForce(blockCoord, block);
-		blockMap->add(blockCoord, block);
+		blockMap->set(blockCoord, block);
 	}
 
 	void remove(Point<P> &p) {
@@ -127,8 +127,8 @@ public:
 
 	void generateAll() {
 		std::uniform_int_distribution<T> randsBlocks(0, blockSize);
-		std::uniform_int_distribution<T> randsX(0, width);
-		std::uniform_int_distribution<T> randsY(0, height);
+		std::uniform_int_distribution<T> randsX(1, width-1);
+		std::uniform_int_distribution<T> randsY(1, height-1);
 		std::uniform_int_distribution<T> randMagnetism(0, 4);
 
 		T numBlocks = randsBlocks(randDevice);
@@ -136,8 +136,8 @@ public:
 			Block<P> *block = new Block<P>(blockSize, blockMass, 0, 0,
 					defaultMu, textureManager);
 			block->setMagnetFacingDirection(randMagnetism(randDevice));
-			T x = (T) (randsX(randDevice) * blockSize) - blockSize;
-			T y = (T) (randsY(randDevice) * blockSize) - blockSize;
+			T x = (T) (randsX(randDevice) * blockSize);
+			T y = (T) (randsY(randDevice) * blockSize);
 			block->setPosition(x, y);
 			add(block);
 		}

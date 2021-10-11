@@ -64,23 +64,21 @@ public:
 		std::fill_n(arr, rows * columns, 0);
 	}
 
-	void add(Point<T> &p, Block<T> *block) {
-		add(p.x, p.y, block);
+	void set(Point<T> &p, Block<T> *block) {
+		set(p.x, p.y, block);
 	}
 
-	void add(T x, T y, Block<T> *block) {
+	void set(T x, T y, Block<T> *block) {
 		S newX = (S) (x / blockSize);
 		S newY = (S) (y / blockSize);
-		if (newX >= rows || newY >= columns) {
+		if (newX < 0 || newY < 0 || newX >= rows || newY >= columns) {
 			std::string err = "X or Y is out of range: (X: "
 					+ std::to_string(newX) + ", Y: " + std::to_string(newY)
 					+ "), (" + "Row: " + std::to_string(rows) + ", Col: "
 					+ std::to_string(columns) + ")";
 			throw std::out_of_range(err);
 		}
-		if (arr[newY * rows + newX] == nullptr) {
-			arr[newY * rows + newX] = block;
-		}
+		arr[newY * rows + newX] = block;
 	}
 
 	void remove(Point<T> &p) {
@@ -104,15 +102,13 @@ public:
 		S newX = (S) (x / blockSize);
 		S newY = (S) (y / blockSize);
 		// Bounds checking
-		if (newX >= rows || newY >= columns) {
+		if (newX < 0 || newY < 0 || newX >= rows || newY >= columns) {
 			std::string err = "X or Y is out of range: (X: "
 					+ std::to_string(newX) + ", Y: " + std::to_string(newY)
 					+ "), (" + "Row: " + std::to_string(rows) + ", Col: "
 					+ std::to_string(columns) + ")";
 			throw std::out_of_range(err);
 		}
-		// Debug Messages
-		std::cout << "NewX: " << newX << ", newY: " << newY << std::endl;
 
 		return arr[newY * rows + newX];
 	}
@@ -131,6 +127,14 @@ public:
 
 	void setArr(Block<T> **&arr) {
 		this->arr = arr;
+	}
+
+	S getColumns() const {
+		return columns;
+	}
+
+	S getRows() const {
+		return rows;
 	}
 
 private:

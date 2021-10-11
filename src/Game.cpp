@@ -198,13 +198,14 @@ void Game::updateBlockVelocity() {
 		if (block == nullptr) {
 			continue;
 		}
-		Point<gen> pos = blockManager->getBlockyCoordinates(block->getPosition().x, block->getPosition().y);
+		Point<gen> pos = blockManager->getBlockyCoordinates(
+				block->getPosition().x, block->getPosition().y);
 		Point<accur> f = blockManager->getForceTable()->getForce(pos.x, pos.y);
 		block->setVx(block->getVx() + (f.x / block->getMass()));
 		block->setVy(block->getVy() + (f.y / block->getMass()));
 
 		// Debug Messages
-		std::cout << "fx: " << f.x << ", fy: " << f.y << std::endl;
+//		std::cout << "fx: " << f.x << ", fy: " << f.y << std::endl;
 	}
 }
 
@@ -231,17 +232,38 @@ void Game::enforceBoxBounds() {
 }
 
 void Game::updateBlockPositions() {
-	for (gen i = 0; i < blockManager->getBlockMap()->getSize(); i++) {
-		Block<accur> *block = blockManager->getBlockMap()->getArr()[i];
-		if (block == nullptr) {
-			continue;
-		}
-		accur deltaX = block->getVx() * deltaTime.asSeconds();
-		accur deltaY = block->getVy() * deltaTime.asSeconds();
-		block->moveWithStats(deltaX, deltaY);
+	gen numRows = blockManager->getBlockMap()->getRows();
+	gen numColumns = blockManager->getBlockMap()->getColumns();
+	gen blockSize = blockManager->getBlockSize();
+	for (gen row = 0; row < numRows; row++) {
+		for (gen col = 0; col < numColumns; col++) {
+			accur x = row, y = col;
+			auto *block = blockManager->getBlockMap()->get(x * blockSize, y * blockSize);
+			if (block == nullptr) {
+				continue;
+			}
+			accur deltaX = block->getVx() * deltaTime.asSeconds();
+			accur deltaY = block->getVy() * deltaTime.asSeconds();
 
-		// Debug Messages
-		std::cout << "Vx: " << block->getVx() << ", Vy: " << block->getVy()
-				<< std::endl;
+			gen newPosX = (gen) ((block->getPosition().x + deltaX) / blockManager->getBlockSize());
+			gen newPosY = (gen) ((block->getPosition().y + deltaY) / blockManager->getBlockSize());
+			if ((newPosX != x || newPosY != y) && (newPosX >= 0 && newPosY >= 0 && newPosX < numRows && newPosY < numColumns)) {
+				auto *otherBlock = blockManager->getBlockMap()->get(newPosX,
+						newPosY);
+				if (otherBlock == nullptr) {
+					blockManager->getBlockMap()->set(newPosX * blockSize, newPosY * blockSize, block);
+					blockManager->getBlockMap()->set(x * blockSize, y * blockSize, nullptr);
+				} else {
+					deltaX = -deltaX;
+					deltaY = -deltaY;
+				}
+			}
+			block->moveWithStats(deltaX, deltaY);
+
+			// Debug Messages
+			std::cout << "X: " << x << ", Y: " << y << ", newPosX: " << newPosX << ", newPosY: " << newPosY << std::endl;
+//			std::cout << "Vx: " << block->getVx() << ", Vy: " << block->getVy()
+//					<< std::endl;
+		}
 	}
 }
